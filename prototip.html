@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taşeron Takip Sistemi — Tam Prototip</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#fff; --border:#e2e8f0; --text:#0f172a; --muted:#64748b;
+    --blue:#2563eb; --blue-bg:#eff6ff; --green:#059669; --green-bg:#ecfdf5;
+    --red:#dc2626; --red-bg:#fef2f2; --amber:#d97706; --amber-bg:#fffbeb;
+    --sidebar:#0f172a; --sidebar-text:#94a3b8; --sidebar-active:#fff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+
+  .banner{background:#7c3aed;color:#ede9fe;text-align:center;padding:9px 16px;font-size:12.5px;letter-spacing:.3px;}
+  .banner strong{color:#fff;}
+
+  .layout{display:flex;min-height:calc(100vh - 38px);}
+
+  /* SIDEBAR */
+  .sidebar{width:240px;background:var(--sidebar);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0;}
+  .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid #1e293b;}
+  .sb-logo{width:36px;height:36px;border-radius:10px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;}
+  .sb-name{color:#fff;font-weight:600;font-size:14px;}
+  .sb-sub{font-size:11px;color:#64748b;margin-top:1px;}
+  .nav{padding:12px 0;flex:1;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 20px;font-size:13.5px;color:var(--sidebar-text);cursor:pointer;border-left:3px solid transparent;transition:.15s;}
+  .nav-item:hover{background:#1e293b;color:#e2e8f0;}
+  .nav-item.active{background:#1e293b;color:var(--sidebar-active);border-left-color:var(--blue);font-weight:600;}
+  .nav-item .ico{width:18px;height:18px;display:flex;align-items:center;justify-content:center;}
+  .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;}
+  .sb-user{border-top:1px solid #1e293b;padding:14px 20px;display:flex;align-items:center;gap:10px;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#334155;color:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
+  .sb-user-name{font-size:13px;color:#e2e8f0;font-weight:500;}
+  .sb-user-role{font-size:11px;color:#64748b;}
+
+  /* MAIN */
+  .main{flex:1;padding:26px 30px;overflow-y:auto;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .page-title{font-size:23px;font-weight:700;}
+  .page-sub{color:var(--muted);font-size:13.5px;margin-top:4px;margin-bottom:22px;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+  .card-h{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .card-t{font-weight:600;font-size:15px;}
+  .card-d{color:var(--muted);font-size:12.5px;margin-top:3px;}
+  .card-b{padding:22px;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  .kpi{padding:18px 20px;}
+  .kpi-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+  .kpi-v{font-size:26px;font-weight:700;margin-top:6px;}
+  .kpi-d{font-size:12px;color:var(--muted);margin-top:3px;}
+
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+  .grid2b{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;padding:11px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;background:#f8fafc;}
+  td{padding:13px 16px;border-bottom:1px solid #f1f5f9;color:#334155;}
+  tr:last-child td{border-bottom:none;}
+  .num{font-variant-numeric:tabular-nums;}
+  .strong{font-weight:600;color:#0f172a;}
+
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3.5px 11px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid;white-space:nowrap;}
+  .b-good{background:var(--green-bg);color:#047857;border-color:#a7f3d0;}
+  .b-mid{background:var(--amber-bg);color:#b45309;border-color:#fde68a;}
+  .b-risk{background:var(--red-bg);color:#b91c1c;border-color:#fecaca;}
+  .b-info{background:var(--blue-bg);color:#1d4ed8;border-color:#bfdbfe;}
+  .b-gray{background:#f1f5f9;color:#475569;border-color:#e2e8f0;}
+
+  .diff-up{color:var(--red);font-weight:600;}
+  .diff-down{color:var(--green);font-weight:600;}
+
+  .alert{display:flex;gap:12px;align-items:flex-start;border-radius:12px;padding:13px 15px;margin-bottom:11px;border:1px solid;}
+  .alert.warn{background:var(--amber-bg);border-color:#fde68a;}
+  .alert.danger{background:var(--red-bg);border-color:#fecaca;}
+  .alert.ok{background:var(--green-bg);border-color:#a7f3d0;}
+  .alert .ico{font-size:17px;line-height:1;}
+  .alert-t{font-weight:600;font-size:13px;}
+  .alert.warn .alert-t{color:#92400e;} .alert.danger .alert-t{color:#b91c1c;} .alert.ok .alert-t{color:#047857;}
+  .alert-b{font-size:12.5px;margin-top:2px;color:#334155;}
+
+  .field{margin-bottom:15px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text);font-family:inherit;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:.15s;}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{background:#1d4ed8;}
+  .btn-outline{background:#fff;border:1px solid var(--border);color:#475569;}
+  .btn-outline:hover{background:#f8fafc;}
+
+  .dropzone{border:2px dashed #cbd5e1;border-radius:12px;padding:26px;text-align:center;color:var(--muted);font-size:13px;background:#f8fafc;transition:.15s;}
+  .dropzone:hover{border-color:var(--blue);background:var(--blue-bg);}
+  .dropzone .big{font-size:26px;margin-bottom:6px;}
+  .dropzone .up{color:var(--blue);font-weight:600;cursor:pointer;}
+
+  .filechip{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:9px 13px;margin-top:10px;background:#fff;}
+  .filechip .ext{background:var(--blue-bg);color:#1d4ed8;font-weight:700;font-size:11px;padding:4px 8px;border-radius:6px;}
+  .filechip .fname{font-size:13px;font-weight:500;flex:1;}
+  .filechip .fsize{font-size:12px;color:var(--muted);}
+
+  .progress{height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden;min-width:90px;}
+  .progress span{display:block;height:100%;border-radius:99px;}
+
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:600;}
+  .pill-on{background:var(--green-bg);color:#047857;}
+  .pill-off{background:var(--red-bg);color:#b91c1c;}
+
+  @media(max-width:980px){.kpis{grid-template-columns:repeat(2,1fr);}.grid2,.grid2b{grid-template-columns:1fr;}.sidebar{width:64px;}.sb-name,.sb-sub,.nav-item span.txt,.sb-user-name,.sb-user-role{display:none;}.nav-item{justify-content:center;}}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <strong>TAM PROtotip — İnteraktif Önizleme.</strong> Soldaki menüden tüm ekranları tıklayıp gezebilirsin. Her ekran canlı ürünün birebir tasarımıdır.
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">TT</div>
+      <div><div class="sb-name">Taşeron Takip</div><div class="sb-sub">Sürüm 1.0</div></div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" data-view="v-overview"><span class="ico">📊</span><span class="txt">Genel Bakış</span><span class="nav-badge">3</span></div>
+      <div class="nav-item" data-view="v-bid"><span class="ico">📝</span><span class="txt">Teklif Girişi</span></div>
+      <div class="nav-item" data-view="v-compare"><span class="ico">⚖️</span><span class="txt">İhale Karşılaştırma</span></div>
+      <div class="nav-item" data-view="v-efficiency"><span class="ico">📈</span><span class="txt">Verimlilik Takibi</span></div>
+      <div class="nav-item" data-view="v-report"><span class="ico">📄</span><span class="txt">Haftalık Rapor</span></div>
+    </div>
+    <div class="sb-user">
+      <div class="avatar">AY</div>
+      <div><div class="sb-user-name">Ahmet Yıldız</div><div class="sb-user-role">Taşeron · Yıldız İnşaat</div></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ============ GENEL BAKIŞ ============ -->
+    <div class="view active" id="v-overview">
+      <h1 class="page-title">Genel Bakış</h1>
+      <p class="page-sub">Tüm şantiyelerdeki fiyat uyarıları, açık ihaleler ve taşeron durumu tek ekranda.</p>
+
+      <div class="kpis">
+        <div class="card kpi"><div class="kpi-l">Aktif Proje</div><div class="kpi-v">3</div><div class="kpi-d">3 şantiyede devam ediyor</div></div>
+        <div class="card kpi"><div class="kpi-l">Aktif Taşeron</div><div class="kpi-v">4</div><div class="kpi-d">2 tanesi veri girmedi</div></div>
+        <div class="card kpi"><div class="kpi-l">Açık İhale</div><div class="kpi-v">5</div><div class="kpi-d">3'ünde teklif bekleniyor</div></div>
+        <div class="card kpi"><div class="kpi-l">Fiyat Uyarısı</div><div class="kpi-v" style="color:var(--red);">3</div><div class="kpi-d">Müdahale gerektiriyor</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><div><div class="card-t">🔔 Fiyat Uyarıları</div><div class="card-d">Farklı şantiyelerde aynı iş kalemi için otomatik tespit</div></div><span class="badge b-risk">3 aktif</span></div>
+          <div class="card-b">
+            <div class="alert danger">
+              <span class="ico">🚨</span>
+              <div><div class="alert-t">C30/37 Hazır Beton — m³</div><div class="alert-b">İstanbul AVM'ye girilen teklif <strong>1.450 ₺</strong>. Aynı kalem İzmir'de <strong>1.180 ₺</strong>'ye yapılmış. <strong>%22,9 pahalı</strong> — görüşme önerilir.</div></div>
+            </div>
+            <div class="alert warn">
+              <span class="ico">⚠️</span>
+              <div><div class="alert-t">B500C Donatı Çeliği — ton</div><div class="alert-b">Ankara'da <strong>28.500 ₺</strong>, İzmir'de <strong>27.900 ₺</strong>. <strong>%2,2 fark</strong> — eşik dahilinde.</div></div>
+            </div>
+            <div class="alert warn">
+              <span class="ico">⚠️</span>
+              <div><div class="alert-t">Zemin Kazı — m³</div><div class="alert-b">Yıldız İnşaat 3 şantiyede 3 farklı fiyat verdi (140-155 ₺). Birim maliyet analizi için tıklayın.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><div><div class="card-t">⏳ Veri Girmeyen Taşeronlar</div><div class="card-d">Bu hafta henüz ilerleme bildirmedi</div></div></div>
+          <div class="card-b">
+            <table>
+              <thead><tr><th>Taşeron</th><th>Proje</th><th>Son Giriş</th><th>Durum</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">Beton Master</td><td>Ankara Ofis</td><td class="num">3 gün önce</td><td><span class="pill pill-off">Gecikti</span></td></tr>
+                <tr><td class="strong">Karo Usta</td><td>İstanbul AVM</td><td class="num">5 gün önce</td><td><span class="pill pill-off">Gecikti</span></td></tr>
+                <tr><td class="strong">Yıldız İnşaat</td><td>İzmir Konut</td><td class="num">Bugün</td><td><span class="pill pill-on">Güncel</span></td></tr>
+                <tr><td class="strong">Demir Çelik</td><td>Ankara Ofis</td><td class="num">1 gün önce</td><td><span class="pill pill-on">Güncel</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TEKLİF GİRİŞİ ============ -->
+    <div class="view" id="v-bid">
+      <h1 class="page-title">Teklif Girişi</h1>
+      <p class="page-sub">Taşeron kendi hesabından giriş yapar. Sistem fiyatı anında diğer şantiyelerle karşılaştırır.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><div class="card-t">Yeni Teklif</div><div class="card-d">İşçilik + Malzeme fiyatları ayrı girilir</div></div>
+          <div class="card-b">
+            <div class="row2">
+              <div class="field"><label>Proje / Şantiye</label><select><option>İstanbul AVM Projesi (IST-002)</option><option>Ankara Ofis Binası (ANK-001)</option><option>İzmir Konut Kompleksi (IZM-003)</option></select></div>
+              <div class="field"><label>İş Kalemi</label><select><option>C35/45 Hazır Beton (m³)</option><option>Zemin Etüdü ve Kazı (m³)</option><option>B500C Donatı Çeliği (ton)</option></select></div>
+            </div>
+            <div class="row3">
+              <div class="field"><label>İşçilik Fiyatı (₺)</label><input type="number" value="200" placeholder="0"></div>
+              <div class="field"><label>Malzeme Fiyatı (₺)</label><input type="number" value="1250" placeholder="0"></div>
+              <div class="field"><label>Miktar</label><input type="number" value="4000" placeholder="0"></div>
+            </div>
+            <div class="field"><label>Birim</label><select><option>m³</option><option>m²</option><option>ton</option><option>kg</option><option>adet</option></select></div>
+            <div class="field"><label>Açıklama (opsiyonel)</label><textarea rows="2" placeholder="Teklif detayları..."></textarea></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-h"><div class="card-t">📎 Belge Yükle</div><div class="card-d">Teklif, sözleşme, fatura, Excel — hepsi buraya</div></div>
+            <div class="card-b">
+              <div class="dropzone">
+                <div class="big">📤</div>
+                Dosyaları sürükleyip bırakın veya <span class="up">gözatın</span><br>
+                <span style="font-size:11.5px;">PDF, Excel (xlsx), resim · max 50MB</span>
+              </div>
+              <div class="filechip"><span class="ext">XLSX</span><span class="fname">beton_teklif_ist002.xlsx</span><span class="fsize">24 KB</span></div>
+              <div class="filechip"><span class="ext">PDF</span><span class="fname">birim_fiyat_tarifesi.pdf</span><span class="fsize">312 KB</span></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:20px;">
+            <div class="card-h"><div class="card-t">⚡ Canlı Karşılaştırma</div><div class="card-d">Teklif kaydedilmeden önce otomatik kontrol</div></div>
+            <div class="card-b">
+              <div class="alert danger">
+                <span class="ico">🚨</span>
+                <div><div class="alert-t">Fiyat Uyarısı</div><div class="alert-b">Birim fiyat <strong>1.450 ₺</strong>. Aynı kalem <strong>İzmir Konut</strong>'ta <strong>1.180 ₺</strong>. En düşük geçmiş fiyattan <strong>%22,9 pahalı</strong>.</div></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px;">
+                <button class="btn btn-primary">Teklifi Gönder</button>
+                <button class="btn btn-outline">Taslak Kaydet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ İHALE KARŞILAŞTIRMA ============ -->
+    <div class="view" id="v-compare">
+      <h1 class="page-title">İhale Karşılaştırma</h1>
+      <p class="page-sub">Aynı iş kaleminin farklı şantiyelerdeki teklif fiyatları otomatik olarak yan yana getirilir.</p>
+
+      <div class="card">
+        <div class="card-h">
+          <div><div class="card-t">İş Kalemi: Hazır Beton (m³)</div><div class="card-d">Kabul edilmiş teklifler · 3 şantiye</div></div>
+          <span class="badge b-info">3 şantiye karşılaştırıldı</span>
+        </div>
+        <table>
+          <thead><tr><th>Şantiye</th><th>Taşeron</th><th>İşçilik</th><th>Malzeme</th><th>Birim Fiyat</th><th>En Düşükten Fark</th><th>Durum</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="strong">İzmir Konut Kompleksi</td><td>Yıldız İnşaat</td><td class="num">195 ₺</td><td class="num">985 ₺</td><td class="num strong">1.180 ₺</td>
+              <td class="num diff-down">▼ En düşük</td><td><span class="badge b-good">İyi</span></td>
+            </tr>
+            <tr>
+              <td class="strong">Ankara Ofis Binası</td><td>Demir Çelik</td><td class="num">180 ₺</td><td class="num">1.170 ₺</td><td class="num strong">1.350 ₺</td>
+              <td class="num diff-up">▲ %14,4</td><td><span class="badge b-mid">Orta</span></td>
+            </tr>
+            <tr>
+              <td class="strong">İstanbul AVM Projesi</td><td>Beton Master</td><td class="num">200 ₺</td><td class="num">1.250 ₺</td><td class="num strong">1.450 ₺</td>
+              <td class="num diff-up">▲ %22,9</td><td><span class="badge b-risk">Riskli</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-h"><div class="card-t">💡 Öneri</div><div class="card-d">Sistem tarafından otomatik üretilir</div></div>
+        <div class="card-b">
+          <div class="alert ok">
+            <span class="ico">✅</span>
+            <div><div class="alert-t">Tasarruf Fırsatı Tespit Edildi</div><div class="alert-b">İstanbul AVM'deki beton teklifini İzmir'deki fiyat seviyesine (1.180 ₺) çekerseniz, 4.000 m³ üzerinden <strong>≈ 1.080.000 ₺</strong> tasarruf edersiniz.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VERİMLİLİK ============ -->
+    <div class="view" id="v-efficiency">
+      <h1 class="page-title">Taşeron Verimlilik Takibi</h1>
+      <p class="page-sub">Planlanan ve gerçekleşen birim üretim karşılaştırması — hangi taşeron işi geciktiriyor anında görülür.</p>
+
+      <div class="card">
+        <div class="card-h"><div class="card-t">Aylık Üretim Verimliliği</div><div class="card-d">Birim/ay · planlı vs gerçekleşen</div></div>
+        <table>
+          <thead><tr><th>Taşeron</th><th>İş Kalemi</th><th>Planlı (birim/ay)</th><th>Gerçekleşen</th><th>Verimlilik</th><th>Durum</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="strong">Yıldız İnşaat</td><td>Zemin Kazı</td><td class="num">1.250 m³</td><td class="num">1.310 m³</td>
+              <td><div style="display:flex;align-items:center;gap:8px;"><div class="progress"><span style="width:104%;background:var(--green);"></span></div><span class="num strong">%105</span></div></td>
+              <td><span class="badge b-good">Üstünde</span></td>
+            </tr>
+            <tr>
+              <td class="strong">Demir Çelik</td><td>Donatı Çeliği</td><td class="num">40 ton</td><td class="num">38 ton</td>
+              <td><div style="display:flex;align-items:center;gap:8px;"><div class="progress"><span style="width:95%;background:var(--amber);"></span></div><span class="num strong">%95</span></div></td>
+              <td><span class="badge b-mid">Yakın</span></td>
+            </tr>
+            <tr>
+              <td class="strong">Beton Master</td><td>Hazır Beton</td><td class="num">600 m³</td><td class="num">470 m³</td>
+              <td><div style="display:flex;align-items:center;gap:8px;"><div class="progress"><span style="width:78%;background:var(--red);"></span></div><span class="num strong">%78</span></div></td>
+              <td><span class="badge b-risk">Gecikiyor</span></td>
+            </tr>
+            <tr>
+              <td class="strong">Karo Usta</td><td>Seramik Kaplama</td><td class="num">850 m²</td><td class="num">540 m²</td>
+              <td><div style="display:flex;align-items:center;gap:8px;"><div class="progress"><span style="width:64%;background:var(--red);"></span></div><span class="num strong">%64</span></div></td>
+              <td><span class="badge b-risk">Kritik</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-h"><div class="card-t">⚠️ Erken Uyarı</div></div>
+        <div class="card-b">
+          <div class="alert danger">
+            <span class="ico">🚨</span>
+            <div><div class="alert-t">Karo Usta — Seramik Kaplama</div><div class="alert-b">Son 3 haftadır planlanan üretimin %65 altında. Proje bitiş tarihi <strong>2 hafta kayabilir</strong>. Hızlandırma toplantısı önerilir.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ HAFTALIK RAPOR ============ -->
+    <div class="view" id="v-report">
+      <h1 class="page-title">Haftalık İlerleme Raporu</h1>
+      <p class="page-sub">PV · EV · AC değerlerinden otomatik hesaplanan SPI/CPI — teknik ofis için hazır rapor.</p>
+
+      <div class="kpis">
+        <div class="card kpi"><div class="kpi-l">Toplam EV</div><div class="kpi-v">45.670.000 ₺</div><div class="kpi-d">Kazanılan Değer</div></div>
+        <div class="card kpi"><div class="kpi-l">Toplam PV</div><div class="kpi-v">45.300.000 ₺</div><div class="kpi-d">Planlanan Değer</div></div>
+        <div class="card kpi"><div class="kpi-l">SPI</div><div class="kpi-v" style="color:var(--green);">1.01</div><div class="kpi-d">Planın üzerinde</div></div>
+        <div class="card kpi"><div class="kpi-l">CPI</div><div class="kpi-v" style="color:var(--green);">1.01</div><div class="kpi-d">Maliyet verimli</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div><div class="card-t">Haftalık Maliyet Eğrisi</div><div class="card-d">Ankara Ofis Binası · 12 hafta</div></div>
+          <div style="display:flex;gap:16px;font-size:12px;color:var(--muted);font-weight:500;">
+            <span>🔵 PV</span><span>🟢 EV</span><span>🔴 AC</span>
+          </div>
+        </div>
+        <div class="card-b">
+          <svg viewBox="0 0 820 320" width="100%" height="auto" style="max-height:360px;">
+            <g stroke="#e2e8f0" stroke-width="1">
+              <line x1="50" y1="20" x2="780" y2="20"/><line x1="50" y1="85" x2="780" y2="85"/>
+              <line x1="50" y1="150" x2="780" y2="150"/><line x1="50" y1="215" x2="780" y2="215"/>
+              <line x1="50" y1="280" x2="780" y2="280"/>
+            </g>
+            <g fill="#94a3b8" font-size="11" text-anchor="end">
+              <text x="42" y="24">8M</text><text x="42" y="89">6M</text><text x="42" y="154">4M</text><text x="42" y="219">2M</text><text x="42" y="284">0</text>
+            </g>
+            <g fill="#94a3b8" font-size="11" text-anchor="middle">
+              <text x="50" y="305">H1</text><text x="182" y="305">H3</text><text x="315" y="305">H5</text><text x="448" y="305">H7</text><text x="580" y="305">H9</text><text x="713" y="305">H11</text><text x="780" y="305">H12</text>
+            </g>
+            <polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="50,263.8 116.4,254 182.7,241 249.1,221.5 315.5,198.8 381.8,176 448.2,150 514.5,124 580.9,101.3 647.3,78.5 713.6,52.5 780,26.5"/>
+            <polyline fill="none" stroke="#16a34a" stroke-width="2.5" points="50,264.4 116.4,254.3 182.7,239.4 249.1,223.1 315.5,195.5 381.8,179.3 448.2,146.8 514.5,127.3 580.9,98 647.3,75.3 713.6,49.3 780,23.3"/>
+            <polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="50,263.1 116.4,253.7 182.7,241.7 249.1,220.9 315.5,200.4 381.8,172.8 448.2,151.6 514.5,120.8 580.9,104.5 647.3,81.8 713.6,55.8 780,29.8"/>
+            <circle cx="780" cy="26.5" r="4" fill="#2563eb"/><circle cx="780" cy="23.3" r="4" fill="#16a34a"/><circle cx="780" cy="29.8" r="4" fill="#dc2626"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-h">
+          <div><div class="card-t">Taşeron Performansı</div><div class="card-d">SPI %60 + CPI %40 · puan bazlı</div></div>
+          <button class="btn btn-primary">📥 Raporu İndir (Excel/PDF)</button>
+        </div>
+        <table>
+          <thead><tr><th>Taşeron</th><th>İş Hacmi</th><th>Ort. SPI</th><th>Ort. CPI</th><th>Puan</th><th>Durum</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">Yıldız İnşaat</td><td class="num">18.250.000 ₺</td><td class="num">1.05</td><td class="num">1.03</td><td class="num strong">100.0</td><td><span class="badge b-good">İyi</span></td></tr>
+            <tr><td class="strong">Demir Çelik</td><td class="num">21.400.000 ₺</td><td class="num">0.96</td><td class="num">0.98</td><td class="num strong">96.8</td><td><span class="badge b-good">İyi</span></td></tr>
+            <tr><td class="strong">Beton Master</td><td class="num">6.125.000 ₺</td><td class="num">0.88</td><td class="num">0.92</td><td class="num strong">89.6</td><td><span class="badge b-mid">Orta</span></td></tr>
+            <tr><td class="strong">Karo Usta</td><td class="num">5.280.000 ₺</td><td class="num">0.72</td><td class="num">0.65</td><td class="num strong">69.2</td><td><span class="badge b-risk">Riskli</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var items = document.querySelectorAll('.nav-item');
+  items.forEach(function(item){
+    item.addEventListener('click', function(){
+      items.forEach(function(i){ i.classList.remove('active'); });
+      item.classList.add('active');
+      var target = item.getAttribute('data-view');
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      document.getElementById(target).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

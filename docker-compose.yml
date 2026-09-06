@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tasaron-db
+    environment:
+      POSTGRES_DB: tasaron_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db:/docker-entrypoint-initdb.d
+      - ./docker/seed-data:/docker-entrypoint-initdb.d/seed
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tasaron_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tasaron-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tasaron_tracker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tasaron_tracker
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

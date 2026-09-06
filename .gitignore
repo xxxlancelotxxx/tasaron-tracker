@@ -1,0 +1,57 @@
+# Bağımlılıklar
+node_modules/
+.next/
+out/
+build/
+
+# Ortam değişkenleri
+.env
+.env.local
+.env.production
+.env.vercel
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Loglar
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# İşletim sistemi
+.DS_Store
+Thumbs.db
+
+# Editör
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Test
+coverage/
+.nyc_output/
+
+# Diğer
+*.pem
+*.key
+secrets.json
+
+# Projeyle ilgisiz eski dosyalar (atla)
+node-4IhTfWZ9.js
+node-*.js
+kucukbas_*.xlsx
+build_small_ruminant_model.py
+__pycache__/
+*.pyc
+.codegraph/
+.omo/
+ErrorReports/
+*.xlsx
+.vercel

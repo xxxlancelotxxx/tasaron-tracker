@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taşeron Takip Sistemi — Önizleme</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --emerald-bg: #ecfdf5;
+    --amber-bg: #fffbeb;
+    --red-bg: #fef2f2;
+    --slate-bg: #f1f5f9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .preview-banner {
+    background: #1e293b;
+    color: #cbd5e1;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  .preview-banner strong { color: #60a5fa; }
+
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 1440px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--blue); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; }
+  .logout {
+    border: 1px solid var(--border); background: #fff;
+    padding: 7px 14px; border-radius: 9px; font-size: 13px;
+    color: #475569; cursor: pointer;
+  }
+
+  .container { max-width: 1440px; margin: 0 auto; padding: 28px 32px; }
+  .page-title { font-size: 26px; font-weight: 700; }
+  .page-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  }
+  .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .card-title { font-weight: 600; font-size: 15px; }
+  .card-desc { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .card-body { padding: 24px; }
+
+  .filters {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    padding: 20px 24px;
+  }
+  .filter label { font-size: 12px; font-weight: 600; color: #475569; }
+  .filter input, .filter select {
+    width: 100%; margin-top: 8px; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px; font-size: 14px;
+    background: #fff; color: var(--text);
+  }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
+  .kpi { padding: 20px 22px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+  .kpi-value { font-size: 24px; font-weight: 700; margin-top: 8px; }
+  .kpi-detail { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+  .legend { display: flex; gap: 18px; font-size: 12px; font-weight: 500; color: #64748b; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 12px 20px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted);
+    border-bottom: 1px solid var(--border); font-weight: 700;
+  }
+  td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  tr:last-child td { border-bottom: none; }
+  .num { font-variant-numeric: tabular-nums; }
+  .badge {
+    display: inline-flex; align-items: center; padding: 4px 12px;
+    border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid;
+  }
+  .badge-good { background: var(--emerald-bg); color: #047857; border-color: #a7f3d0; }
+  .badge-medium { background: var(--amber-bg); color: #b45309; border-color: #fde68a; }
+  .badge-risk { background: var(--red-bg); color: #b91c1c; border-color: #fecaca; }
+
+  .alert {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--amber-bg); border: 1px solid #fde68a;
+    border-radius: 12px; padding: 14px 16px; margin-top: 16px;
+  }
+  .alert-icon { font-size: 18px; }
+  .alert-title { font-weight: 600; font-size: 13px; color: #92400e; }
+  .alert-body { font-size: 13px; color: #92400e; margin-top: 2px; }
+
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .filters { grid-template-columns: 1fr; }
+    .container, .topbar-inner { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="preview-banner">
+  ⚡ <strong>ÖNİZLEME (Preview)</strong> — Bu, gerçek ürünün birebir tasarımıdır. Canlıya alındığında aynen böyle görünecek. Örnek verilerle doldurulmuştur.
+</div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-logo">TT</div>
+      <span class="brand-name">Taşeron Takip Sistemi</span>
+    </div>
+    <button class="logout">Çıkış Yap</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">Haftalık İlerleme Paneli</h1>
+  <p class="page-sub">Proje maliyet performansını haftalık SPI ve CPI göstergeleriyle izleyin.</p>
+
+  <!-- Filtreler -->
+  <div class="card" style="margin-top:20px;">
+    <div class="filters">
+      <div class="filter">
+        <label>Proje</label>
+        <select>
+          <option>Ankara Ofis Binası (ANK-001)</option>
+          <option>İstanbul AVM Projesi (IST-002)</option>
+          <option>İzmir Konut Kompleksi (IZM-003)</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label>Başlangıç Tarihi</label>
+        <input type="date" value="2024-01-15">
+      </div>
+      <div class="filter">
+        <label>Bitiş Tarihi</label>
+        <input type="date" value="2024-04-07">
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Kartları -->
+  <div class="kpis">
+    <div class="card kpi">
+      <div>
+        <div class="kpi-label">Toplam EV</div>
+        <div class="kpi-value">45.670.000 ₺</div>
+        <div class="kpi-detail">Kazanılan Değer</div>
+      </div>
+      <div class="kpi-icon" style="background:#ecfdf5;color:#16a34a;">✓</div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="kpi-label">Toplam PV</div>
+        <div class="kpi-value">45.300.000 ₺</div>
+        <div class="kpi-detail">Planlanan Değer</div>
+      </div>
+      <div class="kpi-icon" style="background:#eff6ff;color:#2563eb;">↗</div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="kpi-label">SPI</div>
+        <div class="kpi-value" style="color:#16a34a;">1.01</div>
+        <div class="kpi-detail">Planın üzerinde</div>
+      </div>
+      <div class="kpi-icon" style="background:#ecfdf5;color:#16a34a;">▲</div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="kpi-label">CPI</div>
+        <div class="kpi-value" style="color:#16a34a;">1.01</div>
+        <div class="kpi-detail">Maliyet verimli</div>
+      </div>
+      <div class="kpi-icon" style="background:#ecfdf5;color:#16a34a;">▼</div>
+    </div>
+  </div>
+
+  <!-- Fiyat Uyarısı (senin hayalindeki özellik) -->
+  <div class="alert">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      <div class="alert-title">Fiyat Uyarısı — C30/37 Hazır Beton (m³)</div>
+      <div class="alert-body">Yeni teklif birim fiyatı <strong>1.450 ₺</strong>. Aynı iş kalemi <strong>İzmir Konut Kompleksi</strong> şantiyesinde <strong>1.180 ₺</strong>'ye yapılmış. Teklifin en düşük geçmiş fiyattan <strong>%22,9 pahalı</strong>. Görüşme önerilir.</div>
+    </div>
+  </div>
+
+  <!-- Grafik -->
+  <div class="card" style="margin-top:20px;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="card-title">Haftalık Maliyet Eğrisi</div>
+        <div class="card-desc">Planlanan (PV), Kazanılan (EV) ve Gerçekleşen (AC) değer karşılaştırması</div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#2563eb;"></span> PV</span>
+        <span><span class="dot" style="background:#16a34a;"></span> EV</span>
+        <span><span class="dot" style="background:#dc2626;"></span> AC</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <svg viewBox="0 0 820 340" width="100%" height="auto" style="max-height:380px;">
+        <!-- Grid -->
+        <g stroke="#e2e8f0" stroke-width="1">
+          <line x1="50" y1="20"  x2="780" y2="20"/>
+          <line x1="50" y1="85"  x2="780" y2="85"/>
+          <line x1="50" y1="150" x2="780" y2="150"/>
+          <line x1="50" y1="215" x2="780" y2="215"/>
+          <line x1="50" y1="280" x2="780" y2="280"/>
+        </g>
+        <!-- Y axis labels -->
+        <g fill="#94a3b8" font-size="11" text-anchor="end">
+          <text x="42" y="24">8M</text>
+          <text x="42" y="89">6M</text>
+          <text x="42" y="154">4M</text>
+          <text x="42" y="219">2M</text>
+          <text x="42" y="284">0</text>
+        </g>
+        <!-- X axis labels -->
+        <g fill="#94a3b8" font-size="11" text-anchor="middle">
+          <text x="50"  y="305">H1</text>
+          <text x="182" y="305">H3</text>
+          <text x="315" y="305">H5</text>
+          <text x="448" y="305">H7</text>
+          <text x="580" y="305">H9</text>
+          <text x="713" y="305">H11</text>
+          <text x="780" y="305">H12</text>
+        </g>
+        <!-- PV line -->
+        <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"
+          points="50,263.8 116.4,254 182.7,241 249.1,221.5 315.5,198.8 381.8,176 448.2,150 514.5,124 580.9,101.3 647.3,78.5 713.6,52.5 780,26.5"/>
+        <!-- EV line -->
+        <polyline fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linejoin="round"
+          points="50,264.4 116.4,254.3 182.7,239.4 249.1,223.1 315.5,195.5 381.8,179.3 448.2,146.8 514.5,127.3 580.9,98 647.3,75.3 713.6,49.3 780,23.3"/>
+        <!-- AC line -->
+        <polyline fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linejoin="round"
+          points="50,263.1 116.4,253.7 182.7,241.7 249.1,220.9 315.5,200.4 381.8,172.8 448.2,151.6 514.5,120.8 580.9,104.5 647.3,81.8 713.6,55.8 780,29.8"/>
+        <!-- End dots -->
+        <circle cx="780" cy="26.5" r="4" fill="#2563eb"/>
+        <circle cx="780" cy="23.3" r="4" fill="#16a34a"/>
+        <circle cx="780" cy="29.8" r="4" fill="#dc2626"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Taşeron Performans Tablosu -->
+  <div class="card" style="margin-top:20px;">
+    <div class="card-header">
+      <div class="card-title">Taşeron Performansı</div>
+      <div class="card-desc">Performans puanına göre sıralanmıştır · SPI %60 + CPI %40</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Taşeron Adı</th>
+          <th>Toplam İş Hacmi</th>
+          <th>Ort. SPI</th>
+          <th>Ort. CPI</th>
+          <th>Performans Puanı</th>
+          <th>Durum</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600;">Yıldız İnşaat Ltd. Şti.</td>
+          <td class="num">18.250.000 ₺</td>
+          <td class="num">1.05</td>
+          <td class="num">1.03</td>
+          <td class="num" style="font-weight:700;">100.0</td>
+          <td><span class="badge badge-good">İyi</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Demir Çelik Yapı A.Ş.</td>
+          <td class="num">21.400.000 ₺</td>
+          <td class="num">0.96</td>
+          <td class="num">0.98</td>
+          <td class="num" style="font-weight:700;">96.8</td>
+          <td><span class="badge badge-good">İyi</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Beton Master Tic. Ltd. Şti.</td>
+          <td class="num">6.125.000 ₺</td>
+          <td class="num">0.88</td>
+          <td class="num">0.92</td>
+          <td class="num" style="font-weight:700;">89.6</td>
+          <td><span class="badge badge-medium">Orta</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Karo Usta San. Tic. Ltd. Şti.</td>
+          <td class="num">5.280.000 ₺</td>
+          <td class="num">0.72</td>
+          <td class="num">0.65</td>
+          <td class="num" style="font-weight:700;">69.2</td>
+          <td><span class="badge badge-risk">Riskli</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:24px;">
+    Bu bir statik önizlemedir. Gerçek üründe tüm veriler veritabanından canlı gelir, filtreler çalışır ve kullanıcılar kendi verilerini girer.
+  </p>
+</div>
+
+</body>
+</html>

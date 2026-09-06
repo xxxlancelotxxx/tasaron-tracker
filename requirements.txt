@@ -1,0 +1,27 @@
+# ============================================================
+# TAŞERON TAKİP SİSTEMİ — PYTHON SERVİS BAĞIMLILIKLARI
+# Kurulum: pip install -r requirements.txt
+# ============================================================
+
+# ---- Web API (FastAPI servisi) ----
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+
+# ---- Supabase (veritabanı + auth + RPC) ----
+supabase==2.6.0
+
+# ---- Veri doğrulama ----
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# ---- Veri işleme ve Excel ----
+pandas==2.2.3
+numpy==2.1.1
+openpyxl==3.1.5
+
+# ---- Ortam değişkenleri ----
+python-dotenv==1.0.1
+
+# ---- HTTP istemci (testler için) ----
+httpx==0.27.2
