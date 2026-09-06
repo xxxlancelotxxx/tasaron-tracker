@@ -38,27 +38,37 @@ function normalizeWeeklyProgress(rows: readonly WeeklyProgressRow[]): readonly W
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  let lines: EvmLine[] = [];
+  let weeklyProgress: WeeklyProgress[] = [];
+  let pendingCount = 0;
+  let dataError: { message: string } | null = null;
 
-  const [{ data: evm, error: evmError }, { data: weekly, error: weeklyError }, { count: pendingCount, error: timesheetError }] = await Promise.all([
-    supabase
-      .from("evm_summary")
-      .select("work_item_id, item_code, description, unit, total_quantity, planned_mh, earned_mh, spent_mh, cpi, spi")
-      .order("item_code"),
-    supabase
-      .from("weekly_progress")
-      .select("week_number, week_start, planlanan_maliyet_pv, kazanilan_deger_ev, fiili_maliyet_ac")
-      .order("week_number"),
-    supabase
-      .from("timesheets")
-      .select("id", { count: "exact", head: true })
-      .eq("durum", "onay_bekliyor"),
-  ]);
+  try {
+    const supabase = await createClient();
 
-  const lines = (evm ?? []) as EvmLine[];
-  const weeklyRows = (weekly ?? []) as unknown as WeeklyProgressRow[];
-  const weeklyProgress = normalizeWeeklyProgress(weeklyRows);
-  const dataError = evmError ?? weeklyError ?? timesheetError;
+    const [{ data: evm, error: evmError }, { data: weekly, error: weeklyError }, { count, error: timesheetError }] = await Promise.all([
+      supabase
+        .from("evm_summary")
+        .select("work_item_id, item_code, description, unit, total_quantity, planned_mh, earned_mh, spent_mh, cpi, spi")
+        .order("item_code"),
+      supabase
+        .from("weekly_progress")
+        .select("week_number, week_start, planlanan_maliyet_pv, kazanilan_deger_ev, fiili_maliyet_ac")
+        .order("week_number"),
+      supabase
+        .from("timesheets")
+        .select("id", { count: "exact", head: true })
+        .eq("durum", "onay_bekliyor"),
+    ]);
+
+    lines = (evm ?? []) as EvmLine[];
+    const weeklyRows = (weekly ?? []) as unknown as WeeklyProgressRow[];
+    weeklyProgress = normalizeWeeklyProgress(weeklyRows);
+    pendingCount = count ?? 0;
+    dataError = evmError ?? weeklyError ?? timesheetError;
+  } catch (e) {
+    dataError = { message: e instanceof Error ? e.message : "Supabase bağlantısı kurulamadı" };
+  }
 
   const totalPlanned = lines.reduce((s, l) => s + Number(l.planned_mh || 0), 0);
   const totalEarned = lines.reduce((s, l) => s + Number(l.earned_mh || 0), 0);
